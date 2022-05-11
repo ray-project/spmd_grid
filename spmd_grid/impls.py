@@ -77,7 +77,7 @@ def _init_spmd_comm(rank, logs):
         else:
             assert False
 
-    assert not rlogs
+    assert not rlogs, rlogs
 
     comm.shape = tuple(shape)
     comm.rank = tuple(pos)

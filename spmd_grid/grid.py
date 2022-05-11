@@ -6,11 +6,21 @@ from spmd_grid.primitives import CommunicationPrimitive, OpCode
 
 
 class ActorGroup:
-    def __init__(self, actors):
+    def __init__(self, grid, actors, *args, **kwargs):
+        self.grid = grid
         self.actors = actors
+        self.args = args
+        self.kwargs = kwargs
 
     def wait_ready(self):
         ray.get([actor.spmd_init_finished.remote() for actor in self.actors])
+
+    def resize(self, *new_shape):
+        for a in self.actors:
+            ray.kill(a)
+        self.grid._logs[0] = (OpCode.Init, tuple(new_shape))
+        self.grid._logs.pop()
+        return self.grid.remote(*self.args, **self.kwargs)
 
     def __getattr__(self, item):
         def _invoke(*args, **kwargs):
@@ -96,4 +106,4 @@ class Grid:
         actors = []
         for r in range(np.prod(self._shape)):
             actors.append(ray_actor.remote(r, self._logs, *args, **kwargs))
-        return ActorGroup(actors)
+        return ActorGroup(self, actors, *args, **kwargs)

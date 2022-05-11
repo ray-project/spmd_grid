@@ -46,8 +46,13 @@ def opt_175b(n_nodes=124, gpus_per_node=8):
 
 
 if __name__ == "__main__":
-    ray.init(num_gpus=32, num_cpus=32)
+    ray.init(num_gpus=48, num_cpus=48)
     grid = opt_175b(4, 8)
     actor_group = grid.remote()
     actor_group.wait_ready()  # optional
     actor_group.train_iter()
+
+    # resize and automatic reshape
+    print("=" * 40)
+    new_actor_group = actor_group.resize(6, 8)
+    new_actor_group.train_iter()
