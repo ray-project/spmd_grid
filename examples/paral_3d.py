@@ -20,16 +20,21 @@ class Trainer:
 
 
 if __name__ == '__main__':
-    ray.init(num_cpus=24)
+    ray.init(num_cpus=32)
 
     # 3D parallel
     # Physical layout: 6 nodes, 4 GPUs per node
     grid = Grid(Trainer, 6, 4)
-    grid.reshape(2, 3, 4)
+    grid.reshape(2, -1, 4)
     grid[X, :, :] = Group(name="data_parallel")
     grid[:, X(0), X(1)] = Pipeline(name="pipe")
     grid[:, :, X] = Group(name="model_parallel")
 
-    actor_group = grid.remote()
-    actor_group.wait_ready()  # optional
-    actor_group.hello()
+    grid_handle = grid.remote()
+    grid_handle.wait_ready()  # optional
+    grid_handle.hello()
+
+    print("=" * 40)
+    grid_handle.resize(8, 4)
+    grid_handle.hello()
+
