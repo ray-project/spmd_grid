@@ -54,6 +54,11 @@ if __name__ == "__main__":
     ray.init(num_gpus=48, num_cpus=48)
 
     grid = palm_540b(2, 24)
-    actor_group = grid.remote()
-    actor_group.wait_ready()  # optional
-    actor_group.train_iter()
+    grid_handle = grid.remote()
+    grid_handle.wait_ready()  # optional
+    grid_handle.train_iter()
+
+    # resize and automatic reshape
+    print("=" * 40)
+    grid_handle.resize(1, 24)
+    grid_handle.train_iter()
