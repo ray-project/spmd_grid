@@ -1,5 +1,6 @@
 import numpy as np
 from spmd_grid.primitives import OpCode, Selector, Group, Pipeline
+from spmd_grid.utils import reshape, permute
 
 
 class BidirectionalPipeline:
@@ -61,10 +62,11 @@ def _init_spmd_comm(rank, logs):
         if op == OpCode.Finalize:
             break
         elif op == OpCode.Reshape:
-            pos = _reshape_pos(pos, old_shape=shape, new_shape=op_data)
-            shape = op_data
+            new_shape = reshape(shape, *op_data)
+            pos = _reshape_pos(pos, old_shape=shape, new_shape=new_shape)
+            shape = new_shape
         elif op == OpCode.Permute:
-            pos = np.array(pos)[op_data].tolist()
+            pos = permute(pos, op_data)
         elif op == OpCode.SetItem:
             key, value = op_data
             # TODO(suquark): Implement initialization of collective communications

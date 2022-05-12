@@ -3,6 +3,7 @@ import numpy as np
 import ray
 from spmd_grid.impls import _init_spmd_comm
 from spmd_grid.primitives import CommunicationPrimitive, OpCode
+from spmd_grid.utils import reshape, permute
 
 
 class GridHandle:
@@ -68,36 +69,14 @@ class Grid:
         return tuple(self._shape)
 
     def reshape(self, *shape):
-        auto_shape_dim = None
-        for i, s in enumerate(shape):
-            if not isinstance(s, int) or s == 0 or s < -1:
-                raise ValueError(shape)
-            if s == -1:
-                if auto_shape_dim is not None:
-                    raise ValueError(shape)
-                else:
-                    auto_shape_dim = i
-
-        reshape_vol = np.prod(shape)
-        volumn = np.prod(self._shape)
-
-        if auto_shape_dim is not None:
-            reshape_vol = -reshape_vol
-            if volumn % reshape_vol != 0:
-                raise ValueError
-            else:
-                shape = list(shape)
-                shape[auto_shape_dim] = volumn // reshape_vol
-        elif reshape_vol != volumn:
-            raise ValueError
+        self._shape = reshape(self._shape, *shape)
         self._logs.append((OpCode.Reshape, tuple(shape)))
-        self._shape = shape
 
     def permute(self, *dims):
         if list(sorted(dims)) != list(range(len(self._shape))):
             raise ValueError
+        self._shape = permute(self._shape)
         self._logs.append((OpCode.Permute, tuple(dims)))
-        self._shape = np.array(self._shape)[dims].tolist()
 
     def __setitem__(self, key, value):
         if not isinstance(value, CommunicationPrimitive):
